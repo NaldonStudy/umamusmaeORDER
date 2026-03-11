@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useRaceStore } from '../store/raceStore';
-import StarsBg from './StarsBg';
+import { useRaceStore } from '../../store/raceStore';
+import StarsBg from '../common/StarsBg';
 
 export default function ResultBoard() {
   const { raceState, startCountdown, reset } = useRaceStore();
@@ -60,7 +60,6 @@ export default function ResultBoard() {
         레이스 종료!
       </div>
 
-      {/* Podium */}
       <div className="result-podium" style={{ position: 'relative', zIndex: 1 }}>
         {top3.map((r) => (
           <div key={r.team.id} className={`podium-slot rank-${r.rank}`}>
@@ -75,7 +74,6 @@ export default function ResultBoard() {
         ))}
       </div>
 
-      {/* Race stats */}
       <div
         style={{
           display: 'flex',
@@ -107,7 +105,6 @@ export default function ResultBoard() {
         )}
       </div>
 
-      {/* Full rankings */}
       <div className="result-rankings" style={{ position: 'relative', zIndex: 1 }}>
         <div className="result-rankings-title">— 전체 순위 —</div>
         {results.map((r) => {
@@ -165,7 +162,6 @@ export default function ResultBoard() {
         })}
       </div>
 
-      {/* Highlight log */}
       <div className="result-log-section" style={{ position: 'relative', zIndex: 1 }}>
         <div className="result-log-title">레이스 하이라이트</div>
         <div className="result-log-list">
