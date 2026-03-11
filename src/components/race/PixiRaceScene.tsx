@@ -1,20 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics } from 'pixi.js';
-import type { RaceState, TeamRaceState } from '../types/race';
+import type { RaceState, TeamRaceState } from '../../types';
 import {
   createTrackConfig,
   distanceToMiniMapPoint,
   distanceToTrackPoint,
   getCameraOffset,
   type MiniMapConfig,
-} from '../lib/pixi/trackMath';
+} from '../../lib/pixi/trackMath';
 import {
   createRunnerBundle,
   destroyRunnerBundle,
   prepareRunnerFrames,
   updateRunnerBundle,
   type RunnerBundle,
-} from '../lib/pixi/runnerLayer';
+} from '../../lib/pixi/runnerLayer';
 import {
   createFxState,
   emitDust,
@@ -24,7 +24,7 @@ import {
   triggerFlash,
   triggerShake,
   updateFxState,
-} from '../lib/pixi/fxLayer';
+} from '../../lib/pixi/fxLayer';
 
 interface Props {
   raceState: RaceState;
@@ -92,7 +92,6 @@ export default function PixiRaceScene({ raceState }: Props) {
       miniMapRef.current = miniMap;
       flashRef.current = flash;
 
-      // Reuse first child as dedicated dust graphics.
       if (!runnerLayer.children.includes(dustLayer)) {
         runnerLayer.addChild(dustLayer);
       }
