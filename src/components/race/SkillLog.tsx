@@ -1,4 +1,4 @@
-import type { RaceLog } from '../types/race';
+import type { RaceLog } from '../../types/race';
 
 interface Props {
   logs: RaceLog[];
