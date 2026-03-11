@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="64" viewBox="0 0 256 64">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- frame 0 -->
+  <g transform="translate(0,0)">
+    <ellipse cx="26" cy="35" rx="16" ry="10" fill="url(#bodyGrad)" />
+    <circle cx="42" cy="30" r="7" fill="#e2e8f0" />
+    <circle cx="45" cy="28" r="1.7" fill="#0f172a" />
+    <polygon points="45,24 48,20 43,22" fill="#f8fafc" />
+    <rect x="17" y="42" width="4" height="11" fill="#0f172a" />
+    <rect x="30" y="42" width="4" height="8" fill="#0f172a" />
+    <rect x="9" y="33" width="8" height="3" fill="#0f172a" />
+  </g>
+
+  <!-- frame 1 -->
+  <g transform="translate(64,0)">
+    <ellipse cx="26" cy="35" rx="16" ry="10" fill="url(#bodyGrad)" />
+    <circle cx="42" cy="30" r="7" fill="#e2e8f0" />
+    <circle cx="45" cy="28" r="1.7" fill="#0f172a" />
+    <polygon points="45,24 48,20 43,22" fill="#f8fafc" />
+    <rect x="17" y="42" width="4" height="8" fill="#0f172a" />
+    <rect x="30" y="42" width="4" height="12" fill="#0f172a" />
+    <rect x="9" y="33" width="8" height="3" fill="#0f172a" />
+  </g>
+
+  <!-- frame 2 -->
+  <g transform="translate(128,0)">
+    <ellipse cx="26" cy="35" rx="16" ry="10" fill="url(#bodyGrad)" />
+    <circle cx="42" cy="30" r="7" fill="#e2e8f0" />
+    <circle cx="45" cy="28" r="1.7" fill="#0f172a" />
+    <polygon points="45,24 48,20 43,22" fill="#f8fafc" />
+    <rect x="17" y="42" width="4" height="10" fill="#0f172a" />
+    <rect x="30" y="42" width="4" height="9" fill="#0f172a" />
+    <rect x="9" y="33" width="8" height="3" fill="#0f172a" />
+  </g>
+
+  <!-- frame 3 -->
+  <g transform="translate(192,0)">
+    <ellipse cx="26" cy="35" rx="16" ry="10" fill="url(#bodyGrad)" />
+    <circle cx="42" cy="30" r="7" fill="#e2e8f0" />
+    <circle cx="45" cy="28" r="1.7" fill="#0f172a" />
+    <polygon points="45,24 48,20 43,22" fill="#f8fafc" />
+    <rect x="17" y="42" width="4" height="7" fill="#0f172a" />
+    <rect x="30" y="42" width="4" height="12" fill="#0f172a" />
+    <rect x="9" y="33" width="8" height="3" fill="#0f172a" />
+  </g>
+</svg>
