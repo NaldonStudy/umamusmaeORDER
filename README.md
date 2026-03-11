@@ -80,7 +80,7 @@ ResultBoard (최종 순위 및 통계)
 | 빌드 도구 | Vite |
 | 렌더링 | PixiJS 8 |
 | 상태 관리 | Zustand |
-| 스타일 | CSS (`src/styles/race.css`) |
+| 스타일 | CSS (화면별 분리: `globals.css` / `setup.css` / `race.css` / `result.css`) |
 | 배포 | GitHub Pages |
 | 오디오 | 레이스 전용 오디오 레이어 (`src/lib/audioRace.ts`) |
 
@@ -92,25 +92,45 @@ ResultBoard (최종 순위 및 통계)
 umamusmaeORDER/
 ├── src/
 │   ├── components/
-│   │   ├── TeamSetup.tsx
-│   │   ├── RaceTrack.tsx
-│   │   ├── PixiRaceScene.tsx
-│   │   ├── SkillFlash.tsx
-│   │   ├── SkillLog.tsx
-│   │   └── ResultBoard.tsx
+│   │   ├── setup/               ← 팀 등록 화면
+│   │   │   └── TeamSetup.tsx
+│   │   ├── race/                ← 레이스 진행 화면
+│   │   │   ├── RaceTrack.tsx        (UI 전담, 로직은 훅으로 분리)
+│   │   │   ├── PixiRaceScene.tsx
+│   │   │   ├── SkillFlash.tsx
+│   │   │   └── SkillLog.tsx
+│   │   ├── result/              ← 결과 화면
+│   │   │   └── ResultBoard.tsx
+│   │   └── common/              ← 재사용 UI
+│   │       └── StarsBg.tsx
+│   ├── constants/
+│   │   └── race.ts              ← TOTAL_DISTANCE, TICK_INTERVAL_MS, 색상/이모지 배열
+│   ├── hooks/
+│   │   ├── useRaceLoop.ts       ← setInterval 기반 레이스·카운트다운 루프
+│   │   └── useAudio.ts          ← 오디오 lazy init, enable/volume 제어
 │   ├── lib/
-│   │   ├── raceEngine.ts
-│   │   ├── audioRace.ts
+│   │   ├── raceEngine.ts        ← 위치 계산, 스킬 발동, 순위 판정, 팀 생성
+│   │   ├── audioRace.ts         ← 관중 함성, 질주음, 스킬/결승 SFX 제어
 │   │   └── pixi/
-│   │       ├── trackMath.ts
-│   │       ├── runnerLayer.ts
-│   │       └── fxLayer.ts
+│   │       ├── trackMath.ts     ← 거리 → 트랙 좌표 / 미니맵 좌표 변환
+│   │       ├── runnerLayer.ts   ← 주자 렌더링 및 상태 갱신
+│   │       └── fxLayer.ts       ← 먼지, 플래시, 셰이크 등 이펙트 관리
 │   ├── store/
-│   │   └── raceStore.ts
+│   │   └── raceStore.ts         ← 전역 레이스 상태 (팀 생성 로직 제거됨)
 │   ├── types/
-│   │   └── race.ts
-│   └── styles/
-│       └── race.css
+│   │   ├── index.ts             ← 전체 타입 re-export
+│   │   ├── skill.ts             ← Skill, SkillTrigger, SkillEffectType, ActiveEffect
+│   │   ├── team.ts              ← Team, TeamRaceState
+│   │   └── race.ts              ← RaceState, RaceLog, RacePhase, SkillBanner, RaceResult
+│   ├── data/
+│   │   └── skills.ts            ← 스킬 데이터 정의
+│   ├── styles/
+│   │   ├── globals.css          ← :root 변수, body, 전역 초기화
+│   │   ├── setup.css            ← TeamSetup 전용 스타일
+│   │   ├── race.css             ← RaceTrack / PixiRaceScene 전용 스타일
+│   │   └── result.css           ← ResultBoard 전용 스타일
+│   ├── App.tsx
+│   └── main.tsx
 ├── README.md
 └── USAGE_GUIDE.md
 ```
@@ -119,13 +139,37 @@ umamusmaeORDER/
 
 | 파일 | 역할 |
 |------|------|
-| `src/components/RaceTrack.tsx` | 카운트다운, 틱 진행, 레이스 HUD 구성 |
-| `src/components/PixiRaceScene.tsx` | Pixi 앱 초기화 및 프레임 렌더링 |
-| `src/lib/raceEngine.ts` | 위치 계산, 스킬 발동, 순위 판정 |
+| `src/components/race/RaceTrack.tsx` | 카운트다운, 레이스 HUD 렌더링 (루프·오디오는 훅에 위임) |
+| `src/components/race/PixiRaceScene.tsx` | Pixi 앱 초기화 및 프레임 렌더링 |
+| `src/hooks/useRaceLoop.ts` | `setInterval` 기반 레이스·카운트다운 루프 관리 |
+| `src/hooks/useAudio.ts` | 오디오 시스템 lazy init, 음소거·볼륨 상태 제어 |
+| `src/constants/race.ts` | `TOTAL_DISTANCE`, `TICK_INTERVAL_MS`, 팀 색상·이모지 배열 등 상수 집중 |
+| `src/lib/raceEngine.ts` | 위치 계산, 스킬 발동, 순위 판정, 팀 생성 로직 |
 | `src/lib/audioRace.ts` | 관중 함성, 질주음, 스킬/결승 SFX 제어 |
 | `src/lib/pixi/trackMath.ts` | 거리 → 트랙 좌표 / 미니맵 좌표 변환 |
 | `src/lib/pixi/runnerLayer.ts` | 주자 렌더링 및 상태 갱신 |
 | `src/lib/pixi/fxLayer.ts` | 먼지, 플래시, 셰이크 등 이펙트 관리 |
+| `src/store/raceStore.ts` | 전역 레이스 상태 관리 (팀 생성은 `raceEngine`에 위임) |
+| `src/types/skill.ts` | 스킬 관련 타입 (`Skill`, `SkillTrigger`, `ActiveEffect` 등) |
+| `src/types/team.ts` | 팀 관련 타입 (`Team`, `TeamRaceState`) |
+| `src/types/race.ts` | 레이스 상태 타입 (`RaceState`, `RaceLog`, `RacePhase` 등) |
+
+---
+
+## 🔄 리팩토링 개요
+
+기존 flat 구조에서 역할 기반 모듈 구조로 정리했습니다.
+
+| 구분 | 변경 전 | 변경 후 |
+|------|---------|---------|
+| 컴포넌트 구조 | `components/` 단일 폴더 flat 나열 | `setup/` / `race/` / `result/` / `common/` 화면별 분리 |
+| 스타일 | `race.css` 단일 1000줄+ | `globals` / `setup` / `race` / `result` 4개 파일 분리 |
+| 타입 | `types/race.ts` 단일 파일 | `skill.ts` / `team.ts` / `race.ts` + `index.ts` re-export |
+| 상수 | 여러 파일에 분산 | `constants/race.ts` 단일 집중 |
+| 루프 로직 | `RaceTrack.tsx` 내 `setInterval` 직접 관리 | `hooks/useRaceLoop.ts` 분리 |
+| 오디오 로직 | `RaceTrack.tsx` 내 인라인 제어 | `hooks/useAudio.ts` 분리 |
+| 팀 생성 로직 | `raceStore.ts` 내 `createTeam()` 정의 | `raceEngine.ts`로 이동 |
+| 유틸 함수 | `raceEngine.ts` 내 색상·이모지 함수 혼재 | `constants/race.ts`로 이동 |
 
 ---
 
@@ -194,11 +238,12 @@ npm run deploy
 
 ## 🛣️ 구현 로드맵
 
-1. `trackMath`, `runnerLayer`, `fxLayer` 중심으로 Pixi 씬 구조를 모듈화해 유지보수 기반 확보
-2. 스프라이트 러너 + 타원 트랙 + 타원 미니맵 1차 완성
-3. `burst`, `skill_activate`, `overtaken` 로그 기반 고급 FX 연결
-4. `audioRace` 기반 오디오 시스템과 음소거 / 볼륨 UI 추가
-5. 12팀 기준 부하 테스트 및 파티클 / GC 최적화
+1. 파일 구조 리팩토링 완료 — 타입 분리, 상수 집중, 훅 분리, 컴포넌트 폴더 구조화, CSS 분리
+2. `trackMath`, `runnerLayer`, `fxLayer` 중심으로 Pixi 씬 구조를 모듈화해 유지보수 기반 확보
+3. 스프라이트 러너 + 타원 트랙 + 타원 미니맵 1차 완성
+4. `burst`, `skill_activate`, `overtaken` 로그 기반 고급 FX 연결
+5. `audioRace` 기반 오디오 시스템과 음소거 / 볼륨 UI 추가
+6. 12팀 기준 부하 테스트 및 파티클 / GC 최적화
 
 ### 검증 기준
 
