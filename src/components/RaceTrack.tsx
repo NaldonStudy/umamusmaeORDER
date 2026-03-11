@@ -1,10 +1,20 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { useRaceStore } from '../store/raceStore';
 import { TOTAL_DISTANCE, TICK_INTERVAL_MS } from '../lib/raceEngine';
+import type { RaceState } from '../types/race';
 import SkillLog from './SkillLog';
 import SkillFlash from './SkillFlash';
-import PixiRaceScene from './PixiRaceScene';
-import { RaceAudioSystem } from '../lib/audioRace';
+
+const LazyPixiRaceScene = lazy(() => import('./PixiRaceScene'));
+
+interface RaceAudioSystemLike {
+  init(): Promise<void>;
+  setEnabled(on: boolean): Promise<void>;
+  setVolume(vol: number): void;
+  updateFromRaceState(state: RaceState | null): void;
+  playLogEvent(log: { type: string }): void;
+  destroy(): void;
+}
 
 export default function RaceTrack() {
   const {
@@ -18,7 +28,8 @@ export default function RaceTrack() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef = useRef<RaceAudioSystem | null>(null);
+  const audioRef = useRef<RaceAudioSystemLike | null>(null);
+  const audioLoadRef = useRef<Promise<RaceAudioSystemLike | null> | null>(null);
   const lastAudioLogIndexRef = useRef(0);
 
   const stopRaceInterval = useCallback(() => {
@@ -28,14 +39,20 @@ export default function RaceTrack() {
     }
   }, []);
 
-  useEffect(() => {
-    const audio = new RaceAudioSystem();
-    audioRef.current = audio;
-    void audio.init();
-    return () => {
-      audio.destroy();
-      audioRef.current = null;
-    };
+  const ensureAudioSystem = useCallback(async () => {
+    if (audioRef.current) return audioRef.current;
+    if (audioLoadRef.current) return await audioLoadRef.current;
+
+    audioLoadRef.current = import('../lib/audioRace')
+      .then(async (mod) => {
+        const audio = new mod.RaceAudioSystem();
+        audioRef.current = audio;
+        await audio.init();
+        return audio;
+      })
+      .catch(() => null);
+
+    return await audioLoadRef.current;
   }, []);
 
   useEffect(() => {
@@ -45,21 +62,42 @@ export default function RaceTrack() {
   }, [soundVolume]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    void audio.setEnabled(soundEnabled);
-  }, [soundEnabled]);
+    let cancelled = false;
+    const syncAudio = async () => {
+      if (soundEnabled) {
+        const audio = await ensureAudioSystem();
+        if (!audio || cancelled) return;
+        audio.setVolume(soundVolume / 100);
+        await audio.setEnabled(true);
+        return;
+      }
+      const audio = audioRef.current;
+      if (!audio) return;
+      await audio.setEnabled(false);
+    };
+    void syncAudio();
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureAudioSystem, soundEnabled, soundVolume]);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.destroy();
+      audioRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !raceState) return;
+    if (!audio || !raceState || !soundEnabled) return;
     audio.updateFromRaceState(raceState);
     const newLogs = raceState.logs.slice(lastAudioLogIndexRef.current);
     lastAudioLogIndexRef.current = raceState.logs.length;
     for (const log of newLogs) {
       audio.playLogEvent(log);
     }
-  }, [raceState]);
+  }, [raceState, soundEnabled]);
 
   useEffect(() => {
     if (!raceState) return;
@@ -158,7 +196,9 @@ export default function RaceTrack() {
       </div>
 
       <div className="pixi-track-wrapper">
-        <PixiRaceScene raceState={raceState} />
+        <Suspense fallback={<div className="pixi-loading">레이스 렌더러 로딩 중...</div>}>
+          <LazyPixiRaceScene raceState={raceState} />
+        </Suspense>
         <div className="race-ranking-overlay">
           <div className="race-ranking-title">실시간 순위</div>
           {topRankings.map((teamState) => {
