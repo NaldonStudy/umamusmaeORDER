@@ -5,4 +5,19 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/umamusmaeORDER/',
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/pixi.js')) {
+            return 'pixi';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 })
