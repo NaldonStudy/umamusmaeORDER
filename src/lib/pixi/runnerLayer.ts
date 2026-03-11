@@ -1,8 +1,10 @@
 import {
   AnimatedSprite,
   Application,
+  Assets,
   Container,
   Graphics,
+  Rectangle,
   Sprite,
   Text,
   TextStyle,
@@ -39,6 +41,41 @@ function createRunnerFrames(app: Application, colorHex: string): Texture[] {
   ];
 }
 
+let sharedExternalFrames: Texture[] | null = null;
+let preparePromise: Promise<void> | null = null;
+
+export async function prepareRunnerFrames(baseUrl: string) {
+  if (sharedExternalFrames) return;
+  if (preparePromise) {
+    await preparePromise;
+    return;
+  }
+
+  preparePromise = (async () => {
+    try {
+      const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+      const sheetTexture = await Assets.load(`${normalizedBase}assets/runner-sheet.svg`);
+      const frameWidth = 64;
+      const frameHeight = 64;
+      const frames: Texture[] = [];
+      for (let i = 0; i < 4; i += 1) {
+        frames.push(
+          new Texture({
+            source: sheetTexture.source,
+            frame: new Rectangle(i * frameWidth, 0, frameWidth, frameHeight),
+          })
+        );
+      }
+      sharedExternalFrames = frames;
+    } catch {
+      // If external asset load fails, fallback stays enabled.
+      sharedExternalFrames = null;
+    }
+  })();
+
+  await preparePromise;
+}
+
 export interface RunnerBundle {
   teamId: string;
   container: Container;
@@ -53,12 +90,15 @@ export function createRunnerBundle(
   parent: Container,
   team: { id: string; name: string; color: string }
 ): RunnerBundle {
-  const frames = createRunnerFrames(app, team.color);
+  const frames = sharedExternalFrames ?? createRunnerFrames(app, team.color);
   const sprite = new AnimatedSprite(frames);
   sprite.animationSpeed = 0.24;
   sprite.play();
   sprite.anchor.set(0.5);
-  sprite.scale.set(1.15);
+  sprite.scale.set(sharedExternalFrames ? 0.7 : 1.15);
+  if (sharedExternalFrames) {
+    sprite.tint = hexToNumber(team.color);
+  }
 
   const glow = new Sprite(Texture.WHITE);
   glow.anchor.set(0.5);
