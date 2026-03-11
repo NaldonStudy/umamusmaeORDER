@@ -1,8 +1,7 @@
 import { useRaceStore } from './store/raceStore';
-import TeamSetup from './components/TeamSetup';
-import RaceTrack from './components/RaceTrack';
-import ResultBoard from './components/ResultBoard';
-import './styles/race.css';
+import TeamSetup from './components/setup/TeamSetup';
+import RaceTrack from './components/race/RaceTrack';
+import ResultBoard from './components/result/ResultBoard';
 
 export default function App() {
   const { raceState } = useRaceStore();
