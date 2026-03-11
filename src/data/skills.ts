@@ -1,4 +1,4 @@
-import type { Skill } from '../types/race';
+import type { Skill } from '../types/skill';
 
 export const SKILLS: Skill[] = [
   {

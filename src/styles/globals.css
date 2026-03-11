@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+:root {
+  --bg-dark: #0f0a1e;
+  --bg-mid: #1a1030;
+  --bg-card: #251840;
+  --accent-pink: #f472b6;
+  --accent-gold: #fbbf24;
+  --accent-purple: #a78bfa;
+  --text-bright: #f8f8ff;
+  --text-muted: #a0aec0;
+  --track-bg: #1e1535;
+  --track-lane: #2a1f4a;
+  --track-line: #3d2e6b;
+  --finish-line: #fbbf24;
+  --glow-pink: 0 0 20px rgba(244, 114, 182, 0.6);
+  --glow-gold: 0 0 20px rgba(251, 191, 36, 0.6);
+  --glow-purple: 0 0 20px rgba(167, 139, 250, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-bright);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.25);
+  border-radius: 3px;
+}
+
+/* ===== STAR DECORATIONS ===== */
+.stars-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+  opacity: 0;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: var(--opacity, 0.7); }
+}

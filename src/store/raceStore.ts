@@ -1,12 +1,11 @@
 import { create } from 'zustand';
-import type { Team, RaceState, RacePhase } from '../types/race';
+import type { Team, RaceState, RacePhase } from '../types';
 import {
   createInitialRaceState,
+  createTeam,
   tickRace,
-  generateTeamColor,
-  generateTeamEmoji,
 } from '../lib/raceEngine';
-import { getRandomSkills } from '../data/skills';
+import { COUNTDOWN_START, MAX_TEAMS } from '../constants/race';
 
 interface RaceStore {
   raceState: RaceState | null;
@@ -20,36 +19,19 @@ interface RaceStore {
   startCountdown: () => void;
   setPhase: (phase: RacePhase) => void;
   tickRace: () => void;
-  reset: () => void;
   tickCountdown: () => void;
-}
-
-function createTeam(name: string, index: number): Team {
-  const speedTiers = [4.8, 5.2, 5.5, 5.8, 6.1, 6.4];
-  const baseSpeed = speedTiers[Math.floor(Math.random() * speedTiers.length)] + (Math.random() - 0.5) * 0.3;
-  return {
-    id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name,
-    color: generateTeamColor(index),
-    emoji: generateTeamEmoji(index),
-    baseSpeed,
-    acceleration: 0.8 + Math.random() * 0.4,
-    stamina: 65 + Math.floor(Math.random() * 36),
-    condition: 0.85 + Math.random() * 0.15,
-    skills: getRandomSkills(2 + Math.floor(Math.random() * 3)),
-  };
+  reset: () => void;
 }
 
 export const useRaceStore = create<RaceStore>((set, get) => ({
   raceState: null,
   pendingTeams: [],
-  countdownValue: 3,
+  countdownValue: COUNTDOWN_START,
 
   addTeam: (name: string) => {
     const { pendingTeams } = get();
-    if (pendingTeams.length >= 12) return;
-    const team = createTeam(name, pendingTeams.length);
-    set({ pendingTeams: [...pendingTeams, team] });
+    if (pendingTeams.length >= MAX_TEAMS) return;
+    set({ pendingTeams: [...pendingTeams, createTeam(name, pendingTeams.length)] });
   },
 
   removeTeam: (id: string) => {
@@ -66,8 +48,7 @@ export const useRaceStore = create<RaceStore>((set, get) => ({
 
   startCountdown: () => {
     const { pendingTeams } = get();
-    const state = createInitialRaceState(pendingTeams);
-    set({ raceState: state, countdownValue: 3 });
+    set({ raceState: createInitialRaceState(pendingTeams), countdownValue: COUNTDOWN_START });
   },
 
   setPhase: (phase: RacePhase) => {
@@ -98,6 +79,6 @@ export const useRaceStore = create<RaceStore>((set, get) => ({
   },
 
   reset: () => {
-    set({ raceState: null, pendingTeams: [], countdownValue: 3 });
+    set({ raceState: null, pendingTeams: [], countdownValue: COUNTDOWN_START });
   },
 }));

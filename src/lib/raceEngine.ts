@@ -1,18 +1,56 @@
-import type {
-  Team,
-  TeamRaceState,
-  RaceState,
-  RaceLog,
-  SkillBanner,
-  ActiveEffect,
-} from '../types/race';
+import type { Team, TeamRaceState } from '../types/team';
+import type { RaceState, RaceLog, SkillBanner } from '../types/race';
+import type { ActiveEffect } from '../types/skill';
+import {
+  TOTAL_DISTANCE,
+  BASE_SPEED_MIN,
+  BASE_SPEED_MAX,
+  BASE_SPEED_TIERS,
+  STAMINA_DRAIN_RATE,
+  STAMINA_SPEED_PENALTY_THRESHOLD,
+  TEAM_COLORS,
+  TEAM_EMOJIS,
+} from '../constants/race';
+import { getRandomSkills } from '../data/skills';
 
-export const TOTAL_DISTANCE = 1000;
-export const TICK_INTERVAL_MS = 50;
-const BASE_SPEED_MIN = 4.5;
-const BASE_SPEED_MAX = 6.5;
-const STAMINA_DRAIN_RATE = 0.25;
-const STAMINA_SPEED_PENALTY_THRESHOLD = 20;
+export { TOTAL_DISTANCE };
+
+// ---------------------------------------------------------------------------
+// 팀 생성
+// ---------------------------------------------------------------------------
+
+export function generateTeamColor(index: number): string {
+  return TEAM_COLORS[index % TEAM_COLORS.length];
+}
+
+export function generateTeamEmoji(index: number): string {
+  return TEAM_EMOJIS[index % TEAM_EMOJIS.length];
+}
+
+export function clampSpeed(speed: number): number {
+  return Math.max(BASE_SPEED_MIN, Math.min(BASE_SPEED_MAX, speed));
+}
+
+export function createTeam(name: string, index: number): Team {
+  const baseSpeed =
+    BASE_SPEED_TIERS[Math.floor(Math.random() * BASE_SPEED_TIERS.length)] +
+    (Math.random() - 0.5) * 0.3;
+  return {
+    id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name,
+    color: generateTeamColor(index),
+    emoji: generateTeamEmoji(index),
+    baseSpeed,
+    acceleration: 0.8 + Math.random() * 0.4,
+    stamina: 65 + Math.floor(Math.random() * 36),
+    condition: 0.85 + Math.random() * 0.15,
+    skills: getRandomSkills(2 + Math.floor(Math.random() * 3)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 초기 상태 생성
+// ---------------------------------------------------------------------------
 
 export function createInitialTeamState(team: Team): TeamRaceState {
   return {
@@ -41,6 +79,10 @@ export function createInitialRaceState(teams: Team[]): RaceState {
   };
 }
 
+// ---------------------------------------------------------------------------
+// 틱 내부 헬퍼
+// ---------------------------------------------------------------------------
+
 function calcSpeedMultiplier(state: TeamRaceState): number {
   let multiplier = 1.0;
 
@@ -58,7 +100,8 @@ function calcSpeedMultiplier(state: TeamRaceState): number {
   }
 
   if (state.staminaLeft < STAMINA_SPEED_PENALTY_THRESHOLD) {
-    const penaltyFactor = 0.7 + (state.staminaLeft / STAMINA_SPEED_PENALTY_THRESHOLD) * 0.3;
+    const penaltyFactor =
+      0.7 + (state.staminaLeft / STAMINA_SPEED_PENALTY_THRESHOLD) * 0.3;
     multiplier *= penaltyFactor;
   }
 
@@ -86,7 +129,7 @@ function tryActivateSkills(
   totalTeams: number,
   tick: number,
   logs: RaceLog[],
-  banners: SkillBanner[]
+  banners: SkillBanner[],
 ): TeamRaceState {
   let updatedState = { ...state };
   const newLogs: RaceLog[] = [];
@@ -129,7 +172,7 @@ function tryActivateSkills(
       };
     }
 
-    const log: RaceLog = {
+    newLogs.push({
       tick,
       teamId: team.id,
       teamName: team.name,
@@ -139,10 +182,9 @@ function tryActivateSkills(
       skillName: skill.name,
       skillIcon: skill.icon,
       skillColor: skill.color,
-    };
-    newLogs.push(log);
+    });
 
-    const banner: SkillBanner = {
+    newBanners.push({
       id: `${team.id}-${skill.id}-${tick}`,
       teamId: team.id,
       teamName: team.name,
@@ -151,8 +193,7 @@ function tryActivateSkills(
       skillIcon: skill.icon,
       skillColor: skill.color,
       expiresAt: tick + 40,
-    };
-    newBanners.push(banner);
+    });
   }
 
   logs.push(...newLogs);
@@ -175,6 +216,10 @@ function updateRanks(teamStates: TeamRaceState[]): TeamRaceState[] {
   });
 }
 
+// ---------------------------------------------------------------------------
+// 메인 틱 함수
+// ---------------------------------------------------------------------------
+
 export function tickRace(state: RaceState): RaceState {
   if (state.phase !== 'racing') return state;
 
@@ -187,7 +232,6 @@ export function tickRace(state: RaceState): RaceState {
   }
 
   const tick = state.tick + 1;
-  const totalDistance = TOTAL_DISTANCE;
   const newLogs: RaceLog[] = [];
   const newBanners: SkillBanner[] = [];
 
@@ -195,7 +239,7 @@ export function tickRace(state: RaceState): RaceState {
     if (s.finishTime !== null) return s;
 
     const team = state.teams.find((t) => t.id === s.teamId)!;
-    const raceProgress = s.position / totalDistance;
+    const raceProgress = s.position / TOTAL_DISTANCE;
 
     let ns = tickEffects(s);
     ns = tryActivateSkills(team, ns, raceProgress, ns.rank, state.teams.length, tick, newLogs, newBanners);
@@ -204,11 +248,11 @@ export function tickRace(state: RaceState): RaceState {
     const randVariance = 1 + (Math.random() - 0.5) * 0.06;
     const baseMove = team.baseSpeed * speedMult * randVariance;
 
-    const newPosition = Math.min(totalDistance, ns.position + baseMove);
+    const newPosition = Math.min(TOTAL_DISTANCE, ns.position + baseMove);
     const staminaDrain = STAMINA_DRAIN_RATE * speedMult;
     const newStamina = Math.max(0, ns.staminaLeft - staminaDrain);
 
-    const finished = newPosition >= totalDistance;
+    const finished = newPosition >= TOTAL_DISTANCE;
     const finishTime = finished && ns.finishTime === null ? tick : ns.finishTime;
 
     if (finished && ns.finishTime === null) {
@@ -222,13 +266,7 @@ export function tickRace(state: RaceState): RaceState {
       });
     }
 
-    return {
-      ...ns,
-      position: newPosition,
-      speed: baseMove,
-      staminaLeft: newStamina,
-      finishTime,
-    };
+    return { ...ns, position: newPosition, speed: baseMove, staminaLeft: newStamina, finishTime };
   });
 
   updatedStates = updateRanks(updatedStates);
@@ -273,22 +311,4 @@ export function tickRace(state: RaceState): RaceState {
     rankings,
     phase: allDone ? 'result' : 'racing',
   };
-}
-
-export function generateTeamColor(index: number): string {
-  const colors = [
-    '#f43f5e', '#f97316', '#eab308', '#22c55e',
-    '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899',
-    '#06b6d4', '#84cc16', '#a855f7', '#ef4444',
-  ];
-  return colors[index % colors.length];
-}
-
-export function generateTeamEmoji(index: number): string {
-  const emojis = ['🐎', '🦄', '🐴', '🏇', '⭐', '🌸', '💫', '🌟', '🔥', '⚡', '🌈', '🎀'];
-  return emojis[index % emojis.length];
-}
-
-export function clampSpeed(speed: number): number {
-  return Math.max(BASE_SPEED_MIN, Math.min(BASE_SPEED_MAX, speed));
 }
