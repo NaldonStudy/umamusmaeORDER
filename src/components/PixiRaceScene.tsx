@@ -11,6 +11,7 @@ import {
 import {
   createRunnerBundle,
   destroyRunnerBundle,
+  prepareRunnerFrames,
   updateRunnerBundle,
   type RunnerBundle,
 } from '../lib/pixi/runnerLayer';
@@ -63,6 +64,8 @@ export default function PixiRaceScene({ raceState }: Props) {
         app.destroy();
         return;
       }
+
+      await prepareRunnerFrames(import.meta.env.BASE_URL);
 
       hostRef.current.appendChild(app.canvas);
       appRef.current = app;
