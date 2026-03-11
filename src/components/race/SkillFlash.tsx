@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { SkillBanner } from '../types/race';
+import type { SkillBanner } from '../../types/race';
 
 interface Props {
   banners: SkillBanner[];
@@ -30,9 +30,9 @@ export default function SkillFlash({ banners }: Props) {
     setFlashes((prev) => [...prev, ...items].slice(-6));
 
     const timer = setTimeout(() => {
-      setFlashes((prev) => prev.map((f) =>
-        items.some((i) => i.id === f.id) ? { ...f, visible: false } : f
-      ));
+      setFlashes((prev) =>
+        prev.map((f) => (items.some((i) => i.id === f.id) ? { ...f, visible: false } : f))
+      );
     }, 1800);
 
     const cleanup = setTimeout(() => {
