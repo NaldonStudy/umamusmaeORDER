@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { useRaceStore } from '../store/raceStore';
-import StarsBg from './StarsBg';
+import { useRaceStore } from '../../store/raceStore';
+import StarsBg from '../common/StarsBg';
+import { MAX_TEAMS, MIN_TEAMS_TO_START } from '../../constants/race';
 
 const QUICK_FILL_NAMES = [
   '소닉', '썬더볼트', '레드스톰', '블루문', '핑크드림',
@@ -23,7 +24,7 @@ export default function TeamSetup() {
 
   const handleAdd = () => {
     const name = inputValue.trim();
-    if (!name || pendingTeams.length >= 12) return;
+    if (!name || pendingTeams.length >= MAX_TEAMS) return;
     addTeam(name);
     setInputValue('');
     inputRef.current?.focus();
@@ -39,8 +40,8 @@ export default function TeamSetup() {
     sample.forEach((name) => addTeam(name));
   };
 
-  const canStart = pendingTeams.length >= 2;
-  const canAdd = pendingTeams.length < 12;
+  const canStart = pendingTeams.length >= MIN_TEAMS_TO_START;
+  const canAdd = pendingTeams.length < MAX_TEAMS;
 
   return (
     <div className="setup-screen">
@@ -192,7 +193,7 @@ export default function TeamSetup() {
       <div className="setup-footer" style={{ position: 'relative', zIndex: 1 }}>
         <div className="team-count-info">
           <span>{pendingTeams.length}</span> / 12팀 등록됨
-          {pendingTeams.length >= 12 && (
+          {pendingTeams.length >= MAX_TEAMS && (
             <span style={{ color: '#f43f5e', marginLeft: '0.5rem' }}>최대 인원 도달</span>
           )}
         </div>
